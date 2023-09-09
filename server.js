@@ -31,21 +31,55 @@ wss.on('connection', async function connection(ws, req) {
   console.log('websocket connected');
   console.log(req.url);
 
-  const jsfiles = await glob(`**/${req.url}_events.jsonl`, {
-    ignore: 'node_modules/**',
+  ws.on('message', async (data) => {
+    const str = data.toString();
+    const jsonData = JSON.parse(str);
+    console.log('jsonData: ', jsonData); // jsonData: { sequenceNumber: 1}
+    let gameNumber = jsonData.sequenceNumber;
+    let pointer = 1;
+
+    const jsfiles = await glob(`**/${req.url}_events.jsonl`, {
+      ignore: 'node_modules/**',
+    });
+
+    console.log('Emitting', jsfiles[0]);
+    const eventsFile = jsonlFile(jsfiles[0]);
+
+    await eventsFile.read((line) => {
+      // send out the event of the game
+      if (pointer === gameNumber) {
+        const dto = {
+          type: line.events[0].type,
+          actor: line.events[0].actor,
+          action: line.events[0].action,
+          target: line.events[0].target,
+        };
+        ws.send(JSON.stringify(dto));
+        if (line.events[0].type === 'player-acquired-item') {
+        }
+
+        // reach the end of the game
+        if (line.events[0].type === 'team-won-game') {
+          pointer += 1;
+        }
+      }
+
+      // move the pointer to the next game
+      if (pointer < gameNumber) {
+        if (line.events[0].type === 'team-won-game') {
+          pointer += 1;
+        }
+      }
+
+      // game ended
+      if (pointer > gameNumber) {
+        return true;
+      }
+    });
+
+    // reset the pointer
+    pointer = 1;
   });
 
-  console.log('Emitting', jsfiles[0]);
-  const eventsFile = jsonlFile(jsfiles[0]);
   // eventsFile.read((line) => ws.send(JSON.stringify(line)));
-  eventsFile.read((line) => {
-    // line.events[0].type
-    const dto = {
-      type: line.events[0].type,
-      actor: line.events[0].actor,
-      action: line.events[0].action,
-      target: line.events[0].target,
-    };
-    ws.send(JSON.stringify(dto));
-  });
 });
