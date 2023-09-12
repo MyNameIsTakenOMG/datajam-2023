@@ -27,7 +27,7 @@ export const typeDefs = `
     finished: Boolean
     paused: Boolean
     teams: [TeamGameState!]!
-    dratfActions: [DraftAction]
+    draftActions: [DraftAction]!
   }
 
   type GameMap{
