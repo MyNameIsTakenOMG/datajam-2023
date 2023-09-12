@@ -17,6 +17,12 @@ export const typeDefs = `
     name: String
     score: Int
     won: Boolean
+    players: [TeamPlayer]!
+  }
+
+  type TeamPlayer {
+    id: String
+    name: String
   }
 
   type GameState {
