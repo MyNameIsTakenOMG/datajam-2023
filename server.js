@@ -46,28 +46,34 @@ wss.on('connection', async function connection(ws, req) {
     const eventsFile = jsonlFile(jsfiles[0]);
 
     await eventsFile.read((line) => {
-      // send out the event of the game
-      if (pointer === gameNumber) {
-        let message = eventTransform(line);
-        ws.send(JSON.stringify(message));
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          // send out the event of the game
+          if (pointer === gameNumber) {
+            let message = eventTransform(line);
+            ws.send(JSON.stringify(message));
 
-        // reach the end of the game
-        if (line.events[0].type === 'team-won-game') {
-          pointer += 1;
-        }
-      }
+            // reach the end of the game
+            if (line.events[0].type === 'team-won-game') {
+              pointer += 1;
+            }
+          }
 
-      // move the pointer to the next game
-      if (pointer < gameNumber) {
-        if (line.events[0].type === 'team-won-game') {
-          pointer += 1;
-        }
-      }
+          // move the pointer to the next game
+          if (pointer < gameNumber) {
+            if (line.events[0].type === 'team-won-game') {
+              pointer += 1;
+            }
+          }
 
-      // game ended
-      if (pointer > gameNumber) {
-        return true;
-      }
+          // game ended
+          if (pointer > gameNumber) {
+            return true;
+          }
+
+          resolve();
+        }, 500);
+      });
     });
 
     // reset the pointer
